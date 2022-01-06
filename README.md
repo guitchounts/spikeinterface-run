@@ -1,5 +1,5 @@
 # spikeinterface-run
-Code to run spikeinterface spike sorting sessions as batch jobs on slurm
+Code to run spikeinterface spike sorting sessions as batch jobs on slurm. Relies on spikeinterface version 0.90+.
 
 Installation:
 
