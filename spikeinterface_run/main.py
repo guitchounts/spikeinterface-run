@@ -59,24 +59,19 @@ def launch(input_path, sorting_path, slurm, cores, memory, wall_time, partition,
         for session in open_ephys_folders:
             
             
-
-            error_path = os.path.join(session, 'sorting_logs_' + sorting_path)
-            if not os.path.exists(error_path):
-                os.makedirs(error_path)
-            #print(error_path)
             ### edit session name to place spaces with \ in the string (i.e. in ".../Record Node 101/...")
             session = '\\ '.join(session.split(' '))
             
             print(session)
+            
 
-            os.system('sbatch -p {} -t {} --mem {} -c {} -e {} --wrap """spikeinterface-run submit {}"""'.format(
-                            partition, wall_time, memory, cores, error_path, session
+            os.system('sbatch -p {} -t {} --mem {} -c {} --wrap """spikeinterface-run submit {}""" '.format(
+                            partition, wall_time, memory, cores, session
                       ))
 
       
-            # os.system(' spikeinterface-run submit %s  ' % session
-                            
-            #           )
+            
+
 
 
     else:
