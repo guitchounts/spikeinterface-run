@@ -38,7 +38,7 @@ def shared_options(func):
 @cli.command(name="launch")
 @click.option('--slurm/--no-slurm', default=False, help='Submit a slurm job for each .mkv file')
 @click.option('--cores', type=int, default=8, help="Number of cores")
-@click.option('--memory', type=str, default="32GB", help="RAM string")
+@click.option('--memory', type=str, default="64GB", help="RAM string")
 @click.option('--wall-time', type=str, default='4:00:00', help="Wall time")
 @click.option('--partition', type=str, default='short', help="Partition name")
 @click.option('--sorter', type=str, default='ms4', help="Sorter name. Defult = ms4")
