@@ -138,3 +138,31 @@ def run_sorting(input_path):
 
 
 
+  ##### PLOT 
+  ### get mapping of channel id to location:
+  channel_ids = recording.get_channel_ids()
+  channel_locations = recording.get_channel_locations()
+  data_channels = {}
+  for i in range(64):
+      data_channels[channel_ids[i]] = channel_locations[i]
+
+
+  for unit in good_units:
+
+      waveform = we.get_waveforms(unit_id=unit)
+
+      f = plt.figure(dpi=600,figsize=(4,4))
+      for ch,key in enumerate(data_channels):
+      #for key in range(64):
+          plt.plot(np.arange(0,20,20/60) + data_channels[key][0],
+                  waveform[:,:,ch].mean(axis=0) + data_channels[key][1], 
+                  color='k', lw=0.25)
+
+      plt.title('unit %d, snr=%.2f, ISI=%.2f' % (unit,metrics['snr'].values[unit],
+                                                 metrics['isi_violation'].values[unit] ) )
+      sns.despine(left=True,bottom=True)
+      
+      f.savefig('%s/tmp_MS4/unit_%d.pdf' % (input_path,unit) )
+      
+      plt.close(f)
+
