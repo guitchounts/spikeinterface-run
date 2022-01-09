@@ -103,8 +103,8 @@ def run_sorting(input_path):
 
 
 
-
-  export_to_phy(we, '%s/tmp_MS4/phy' % input_path , 
+  try:
+    export_to_phy(we, '%s/tmp_MS4/phy' % input_path , 
                 n_jobs=8, total_memory='1G',
                 #peak_sign='neg',
                 copy_binary=False,
@@ -112,11 +112,14 @@ def run_sorting(input_path):
               #remove_if_exists=True,
                 )
 
+  except:
+    print('Export to phy failed')
 
 
-
-  export_report(we, '%s/tmp_MS4/report' % input_path )
-
+  try:
+    export_report(we, '%s/tmp_MS4/report' % input_path )
+  except:
+    print('Export report failed')
 
 
   metrics = st.validation.compute_quality_metrics(sorting=sorting_MS4, recording=recording_cmr,
