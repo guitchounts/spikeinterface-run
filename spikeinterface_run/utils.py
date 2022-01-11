@@ -113,7 +113,7 @@ def run_sorting(input_path):
 
 
   print('Computing Metrics')
-  qc = st.compute_quality_metrics(we, waveform_principal_component=pc)
+  qc = st.compute_quality_metrics(we, waveform_principal_component=pc,load_if_exists=True)
 
   qc.to_csv('%s/tmp_MS4/metrics.csv' % input_path)
 
@@ -152,8 +152,8 @@ def run_sorting(input_path):
                   waveform[:,:,ch].mean(axis=0) + data_channels[key][1], 
                   color='k', lw=0.25)
 
-      plt.title('unit %d, snr=%.2f, ISI=%.2f' % (unit,metrics['snr'].values[unit],
-                                                 metrics['isi_violation'].values[unit] ) )
+      plt.title('unit %d, snr=%.2f, ISI=%.2f' % (unit,qc['snr'].values[unit],
+                                                 qc['isi_violations_rate'].values[unit] ) )
       sns.despine(left=True,bottom=True)
       
       f.savefig('%s/tmp_MS4/unit_%d.pdf' % (input_path,unit) )
