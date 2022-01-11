@@ -88,7 +88,7 @@ def run_sorting(input_path):
   firings_path = '%s/../tmp_MS4/firings.npz' % input_path
 
   if not os.path.exists(firings_path):
-    
+
     sorting_MS4 = ss.run_sorter('mountainsort4',recording_cmr,  # parallel=True,
                            verbose=True,
                            output_folder=sorting_path, **ms4_params)
@@ -107,19 +107,23 @@ def run_sorting(input_path):
                            n_jobs=8, total_memory='1G') # 
 
 
+  print('Computing PCs')
+  pc = st.compute_principal_components(we, load_if_exists=True,
+                                       n_components=3)
 
-  ## Compute metrics 
-  metrics = st.validation.compute_quality_metrics(sorting=sorting_MS4, recording=recording_cmr,
-                                                  metric_names=['firing_rate', 'isi_violation', 'snr', 'nn_hit_rate', 'nn_miss_rate'],
-                                                  as_dataframe=True)
 
+  print('Computing Metrics')
+  qc = st.compute_quality_metrics(we, waveform_principal_component=pc)
+
+  qc.to_csv('%s/tmp_MS4/metrics.csv' % input_path)
 
   
-  good_units = np.intersect1d(np.where(metrics['isi_violation'].values <= 0.015), np.where(metrics['snr'].values >=3.5 ) )
+  good_units = np.intersect1d(np.where(qc['snr'] >= 3.5), np.where(qc['isi_violations_rate'] < 0.2))
+  #np.intersect1d(np.where(metrics['isi_violation'].values <= 0.015), np.where(metrics['snr'].values >=3.5 ) )
 
   
   all_unit_ids = sorting_MS4.get_unit_ids()
-  np.savez('%s/tmp_MS4/unit_properties' % input_path,all_unit_ids=all_unit_ids,metrics=metrics,good_units=good_units)
+  np.savez('%s/tmp_MS4/unit_properties' % input_path,all_unit_ids=all_unit_ids,good_units=good_units)
 
   print('saved unit properties')
 
@@ -159,10 +163,7 @@ def run_sorting(input_path):
 
 
 
-  # print('Computing PCs')
-  # pc = st.compute_principal_components(we, load_if_exists=True,
-  #                                      n_components=3, mode='by_channel_local')
-
+  
 
 
   try:
