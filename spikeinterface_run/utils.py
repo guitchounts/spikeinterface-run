@@ -39,7 +39,7 @@ from probeinterface import get_probe, read_prb
 
 
 
-def run_sorting(input_path):
+def run_sorting(input_path,sorter_path = 'tmp_MS4'):
 
   # input_path e.g. /n/groups/datta/guitchounts/data/gmou51/gmou51_2021-12-15_18-08-21_odor/Record Node 101/ 
 
@@ -84,14 +84,14 @@ def run_sorting(input_path):
   start = time.time()
   # run Mountainsort:
 
-  sorting_path = '%s/../tmp_MS4' % input_path
-  firings_path = '%s/../tmp_MS4/firings.npz' % input_path
+  sorter_full_path = '%s/../%s' % (input_path, sorter_path)
+  firings_path = '%s/../%s/firings.npz' % (input_path, sorter_path)
 
   if not os.path.exists(firings_path):
 
     sorting_MS4 = ss.run_sorter('mountainsort4',recording_cmr,  # parallel=True,
                            verbose=True,
-                           output_folder=sorting_path, **ms4_params)
+                           output_folder=sorter_full_path, **ms4_params)
 
     print('sorting finished in %f seconds...' % (time.time() - start) )
 
