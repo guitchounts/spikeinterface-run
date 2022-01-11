@@ -86,7 +86,9 @@ def run_sorting(input_path):
 
   sorting_path = '%s/../tmp_MS4' % input_path
   firings_path = '%s/../tmp_MS4/firings.npz' % input_path
+
   if not os.path.exists(firings_path):
+    
     sorting_MS4 = ss.run_sorter('mountainsort4',recording_cmr,  # parallel=True,
                            verbose=True,
                            output_folder=sorting_path, **ms4_params)
@@ -95,7 +97,7 @@ def run_sorting(input_path):
 
   else:
     print('Loading pre-computed sorting')
-    sorting_MS4 = si.core.NpzSortingExtractor()
+    sorting_MS4 = si.core.NpzSortingExtractor(firings_path)
 
   ### Extract waveforms, compute pcs, export to phy, and save sorting report:
   
@@ -106,7 +108,7 @@ def run_sorting(input_path):
 
 
 
-
+  ## Compute metrics 
   metrics = st.validation.compute_quality_metrics(sorting=sorting_MS4, recording=recording_cmr,
                                                   metric_names=['firing_rate', 'isi_violation', 'snr', 'nn_hit_rate', 'nn_miss_rate'],
                                                   as_dataframe=True)
