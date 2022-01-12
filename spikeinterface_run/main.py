@@ -70,7 +70,7 @@ def launch(input_path, log_name, cores, memory, wall_time, partition, sorter, sk
             print(session)
 
             ## create log path:
-            log_path = '%s/../%s/%s_%%j.out' % (session,sorter_path,log_name)
+            log_path = '%s/%s_%%j.out' % (session,log_name)
             
 
             os.system('sbatch -p {} -t {} --mem {} -c {} -o {} --wrap """spikeinterface-run submit {} --sorter-path {} """ '.format(
