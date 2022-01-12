@@ -37,17 +37,16 @@ def shared_options(func):
     return wrapper
 
 @cli.command(name="launch")
-@click.option('--slurm/--no-slurm', default=False, help='Submit a slurm job for each .mkv file')
 @click.option('--cores', type=int, default=8, help="Number of cores")
 @click.option('--memory', type=str, default="32GB", help="RAM string")
 @click.option('--wall-time', type=str, default='4:00:00', help="Wall time")
 @click.option('--partition', type=str, default='short', help="Partition name")
 @click.option('--sorter', type=str, default='ms4', help="Sorter name. Defult = ms4")
-@click.option('--logs_path', type=str, default=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), help='Path to store slurm logs.')
+@click.option('--log-name', type=str, default=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), help='File name in which to store slurm logs.')
 @click.option('--skip-sorted', type=bool, default=True, help='Bool to skip already sorted files. Default: True')
 
 @shared_options
-def launch(input_path, logs_path, slurm, cores, memory, wall_time, partition, sorter, skip_sorted, sorter_path): #  # 
+def launch(input_path, log_name, cores, memory, wall_time, partition, sorter, skip_sorted, sorter_path): #  # 
     
     print('Launching Sorting')
     
@@ -69,10 +68,13 @@ def launch(input_path, logs_path, slurm, cores, memory, wall_time, partition, so
             session = '\\ '.join(session.split(' '))
             
             print(session)
+
+            ## create log path:
+            log_path = '%s/../%s/%s_%%j.out' % (session,sorter_path,log_name)
             
 
-            os.system('sbatch -p {} -t {} --mem {} -c {} --wrap """spikeinterface-run submit {} --sorter-path {} """ '.format(
-                            partition, wall_time, memory, cores, session, sorter_path
+            os.system('sbatch -p {} -t {} --mem {} -c {} -o {} --wrap """spikeinterface-run submit {} --sorter-path {} """ '.format(
+                            partition, wall_time, memory, cores, log_path, session, sorter_path
                       ))
 
       
