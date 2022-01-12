@@ -51,9 +51,10 @@ def launch(input_path, log_name, cores, memory, wall_time, partition, sorter, sk
     print('Launching Sorting')
     
 
-    # get all open ephys files in the input_path:
-    open_ephys_folders = glob('%s/**/Record*' % input_path,recursive=True)
-    
+    # get all open ephys files in the input_path (these are the ones with Record 10X folders):
+    open_ephys_folders = [os.path.split(item)[0] for item in glob('%s/**/Record*' % x,recursive=True)]
+
+
     if skip_sorted:
         # find sessions that already have the sorter_path in them and skip:
         open_ephys_folders = [folder for folder in open_ephys_folders if not os.path.exists('%s/../%s' % (folder,sorter_path) ) ]
@@ -63,9 +64,6 @@ def launch(input_path, log_name, cores, memory, wall_time, partition, sorter, sk
 
         for session in open_ephys_folders:
             
-            
-            ### edit session name to place spaces with \ in the string (i.e. in ".../Record Node 101/...")
-            session = '\\ '.join(session.split(' '))
             
             print(session)
 

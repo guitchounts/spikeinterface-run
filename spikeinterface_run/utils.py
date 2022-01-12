@@ -41,13 +41,15 @@ from probeinterface import get_probe, read_prb
 
 def run_sorting(input_path,sorter_path = 'tmp_MS4'):
 
-  # input_path e.g. /n/groups/datta/guitchounts/data/gmou51/gmou51_2021-12-15_18-08-21_odor/Record Node 101/ 
-
-  ## remove any pesky backslashes in path:
-  input_path = input_path.replace('\\','')
+  # input_path e.g. /n/groups/datta/guitchounts/data/gmou51/gmou51_2021-12-15_18-08-21_odor/
 
   data = se.read_openephys(input_path)
-  probe = read_prb(glob('%s/../../*.prb' % input_path)[0] ).probes[0]    #('/home/gg121/code/spikeinterface_analysis/A4x16-Poly3-5mm-20-200-160-H64LP.prb').probes[0]
+
+  ## remove the Record Node from input
+  input_path
+
+
+  probe = read_prb(glob('%s/../*.prb' % input_path)[0] ).probes[0]    #('/home/gg121/code/spikeinterface_analysis/A4x16-Poly3-5mm-20-200-160-H64LP.prb').probes[0]
   recording = data.set_probe(probe)
 
 
@@ -84,8 +86,8 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   start = time.time()
   # run Mountainsort:
 
-  sorter_full_path = '%s/../%s' % (input_path, sorter_path)
-  firings_path = '%s/../%s/firings.npz' % (input_path, sorter_path)
+  sorter_full_path = '%s/%s' % (input_path, sorter_path)
+  firings_path = '%s/%s/firings.npz' % (input_path, sorter_path)
 
   if not os.path.exists(firings_path):
 
