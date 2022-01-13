@@ -52,7 +52,7 @@ def launch(input_path, log_name, cores, memory, wall_time, partition, sorter, sk
     
 
     # get all open ephys files in the input_path (these are the ones with Record 10X folders):
-    open_ephys_folders = [os.path.split(item)[0] for item in glob('%s/**/Record*' % x,recursive=True)]
+    open_ephys_folders = [os.path.split(item)[0] for item in glob('%s/**/Record*' % input_path,recursive=True)]
 
 
     if skip_sorted:
