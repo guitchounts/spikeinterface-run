@@ -115,7 +115,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
 
 
   print('Computing Metrics')
-  qc = st.compute_quality_metrics(we, waveform_principal_component=pc,load_if_exists=True)
+  qc = st.compute_quality_metrics(we, waveform_principal_component=pc) # load_if_exists=True
 
   qc.to_csv('%s/tmp_MS4/metrics.csv' % input_path)
 
