@@ -46,7 +46,8 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   data = se.read_openephys(input_path)
 
   ## remove the Record Node from input
-  input_path = os.path.split(input_path)[0] 
+  if 'Record' in input_path:
+    input_path = os.path.split(input_path)[0] 
 
 
   probe = read_prb(glob('%s/../*.prb' % input_path)[0] ).probes[0]    #('/home/gg121/code/spikeinterface_analysis/A4x16-Poly3-5mm-20-200-160-H64LP.prb').probes[0]
@@ -188,9 +189,6 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       plt.close(f)
 
 
-
-
-  
 
 
   try:
