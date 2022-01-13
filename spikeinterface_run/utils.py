@@ -4,7 +4,7 @@ import sys,os
 import pylab
 from scipy import stats,signal,io
 import matplotlib.pyplot as plt
-
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pickle
 import seaborn as sns
 sns.set_style('white')
@@ -115,13 +115,14 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
 
 
   print('Computing Metrics')
-  qc = st.compute_quality_metrics(we, waveform_principal_component=pc) # load_if_exists=True
+  qc = st.compute_quality_metrics(we, waveform_principal_component=pc) # load_if_exists=True -- not an option in 0.91
 
   qc.to_csv('%s/tmp_MS4/metrics.csv' % input_path)
 
   
-  good_units = np.intersect1d(np.where(qc['snr'] >= 3.5), np.where(qc['isi_violations_rate'] < 0.2))
-  #np.intersect1d(np.where(metrics['isi_violation'].values <= 0.015), np.where(metrics['snr'].values >=3.5 ) )
+  # change--now saving unit_ids rather than the index of list of all units.
+  good_units = qc[(qc['snr'] >=3.5) & (qc['snr'] <=20) & (qc['isi_violations_rate'] < 0.2) & (qc['firing_rate'] >= 0.1)  & (qc['presence_ratio'] >= 0.5)   ].index
+
 
   
   all_unit_ids = sorting_MS4.get_unit_ids()
@@ -143,23 +144,47 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       data_channels[channel_ids[i]] = channel_locations[i]
 
 
-  for unit in good_units:
+  for unit in sorting_MS4.get_unit_ids(): 
 
       waveform = we.get_waveforms(unit_id=unit)
 
       f = plt.figure(dpi=600,figsize=(4,4))
+      ax = plt.subplot(111)
+      
       for ch,key in enumerate(data_channels):
-      #for key in range(64):
-          plt.plot(np.arange(0,20,20/60) + data_channels[key][0],
-                  waveform[:,:,ch].mean(axis=0) + data_channels[key][1], 
-                  color='k', lw=0.25)
+      
 
-      plt.title('unit %d, snr=%.2f, ISI=%.2f' % (unit,qc['snr'].values[unit],
-                                                 qc['isi_violations_rate'].values[unit] ) )
+          ax.plot(np.arange(0,20,20/60) + probe._contact_positions[ch,0],
+                waveform[:,:,ch].mean(axis=0) + probe._contact_positions[ch,1], 
+                color='k', lw=0.25)
+      
+      
+      ax.set_title('unit %d, snr=%.2f, ISI=%.2f' % (unit,qc.loc[unit]['snr'],
+                                               qc.loc[unit]['isi_violations_rate'] ) )
+
+      
+      divider = make_axes_locatable(ax)
+      cax = divider.append_axes('bottom', size='50%', pad=0.05)
+      
+      
+      
+      metrics_for_plot = qc.loc[unit][:5] # qc.loc[unit:unit+1,0:5]
+
+      table = cax.table(cellText=metrics_for_plot.apply('{:,.2f}'.format).values.reshape(-1,1).T,
+                colLabels=metrics_for_plot.T.index, loc='center',edges='open',)
+      table.auto_set_font_size(False)
+      table.set_fontsize(3)
+
+      cax.set_yticks([])
+      cax.set_xticks([])
+      sns.despine(ax=cax,left=True,bottom=True)
+      
+      cax.patch.set_alpha(0)
+      
       sns.despine(left=True,bottom=True)
-      
+
       f.savefig('%s/tmp_MS4/unit_%d.pdf' % (input_path,unit) )
-      
+
       plt.close(f)
 
 
