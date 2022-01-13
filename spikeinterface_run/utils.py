@@ -46,7 +46,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   data = se.read_openephys(input_path)
 
   ## remove the Record Node from input
-  input_path
+  input_path = os.path.split(input_path)[0] 
 
 
   probe = read_prb(glob('%s/../*.prb' % input_path)[0] ).probes[0]    #('/home/gg121/code/spikeinterface_analysis/A4x16-Poly3-5mm-20-200-160-H64LP.prb').probes[0]
@@ -168,7 +168,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       
       
       
-      metrics_for_plot = qc.loc[unit][:5] # qc.loc[unit:unit+1,0:5]
+      metrics_for_plot = qc.loc[unit][:5] 
 
       table = cax.table(cellText=metrics_for_plot.apply('{:,.2f}'.format).values.reshape(-1,1).T,
                 colLabels=metrics_for_plot.T.index, loc='center',edges='open',)
