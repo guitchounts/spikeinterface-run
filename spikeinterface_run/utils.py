@@ -70,8 +70,8 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   default_ms4_params = ss.Mountainsort4Sorter.default_params()
   num_workers = 8
   ms4_params = default_ms4_params.copy()
-  ms4_params['adjacency_radius'] = 100
-  ms4_params['detect_sign'] = 0
+  ms4_params['adjacency_radius'] = 50
+  ms4_params['detect_sign'] = -1
   ms4_params['filter'] = False
   ms4_params['num_workers'] = num_workers
 
@@ -163,7 +163,9 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       ax.set_title('unit %d, snr=%.2f, ISI=%.2f' % (unit,qc.loc[unit]['snr'],
                                                qc.loc[unit]['isi_violations_rate'] ) )
 
-      
+      ax.set_ylim([0,150])
+      ax.set_xlim([0,750])
+
       divider = make_axes_locatable(ax)
       cax = divider.append_axes('bottom', size='50%', pad=0.05)
       
