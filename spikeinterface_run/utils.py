@@ -203,13 +203,14 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
               #remove_if_exists=True,
                 )
 
-  except:
+  except Exception as e:
     print('Export to phy failed')
+    print(e)
+    
 
-
-  try:
-    print('Exporting spike sorting report')
-    export_report(we, '%s/tmp_MS4/report' % input_path )
-  except:
-    print('Export report failed')
+  # try:
+  #   print('Exporting spike sorting report')
+  #   export_report(we, '%s/tmp_MS4/report' % input_path )
+  # except:
+  #   print('Export report failed')
 
