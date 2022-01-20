@@ -83,15 +83,16 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
 
 
   #### run sorting:
-  print('Starting mountainsort4 sorting....')
-  start = time.time()
+  
   # run Mountainsort:
 
   sorter_full_path = '%s/%s' % (input_path, sorter_path)
   firings_path = '%s/%s/firings.npz' % (input_path, sorter_path)
 
   if not os.path.exists(firings_path):
-
+    print('Starting mountainsort4 sorting....')
+    start = time.time()
+    
     sorting_MS4 = ss.run_sorter('mountainsort4',recording_cmr,  # parallel=True,
                            verbose=True,
                            output_folder=sorter_full_path, **ms4_params)
@@ -206,7 +207,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   except Exception as e:
     print('Export to phy failed')
     print(e)
-    
+
 
   # try:
   #   print('Exporting spike sorting report')

@@ -44,9 +44,10 @@ def shared_options(func):
 @click.option('--sorter', type=str, default='ms4', help="Sorter name. Defult = ms4")
 @click.option('--log-name', type=str, default=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), help='File name in which to store slurm logs.')
 @click.option('--skip-sorted', type=bool, default=True, help='Bool to skip already sorted files. Default: True')
+@click.option('--slurm', type=bool, default=True, help='Bool to send job to slurm (True) or to run interactively (False). Default: True')
 
 @shared_options
-def launch(input_path, log_name, cores, memory, wall_time, partition, sorter, skip_sorted, sorter_path): #  # 
+def launch(input_path, log_name, cores, memory, wall_time, partition, sorter, skip_sorted, sorter_path, slurm): #  # 
     
     print('Launching Sorting')
     
@@ -70,8 +71,12 @@ def launch(input_path, log_name, cores, memory, wall_time, partition, sorter, sk
             ## create log path:
             log_path = '%s/%s_%%j.out' % (session,log_name)
             
-
-            os.system('sbatch -p {} -t {} --mem {} -c {} -o {} --wrap """spikeinterface-run submit {} --sorter-path {} """ '.format(
+            if not slurm:
+                os.system('  """spikeinterface-run submit {} --sorter-path {} """ '.format(session, sorter_path
+                            
+                      ))
+            else:
+                os.system('sbatch -p {} -t {} --mem {} -c {} -o {} --wrap """spikeinterface-run submit {} --sorter-path {} """ '.format(
                             partition, wall_time, memory, cores, log_path, session, sorter_path
                       ))
 
