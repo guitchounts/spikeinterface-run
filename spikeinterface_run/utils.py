@@ -18,7 +18,7 @@ matplotlib.use('pdf')
 plt.rcParams['pdf.fonttype'] = 'truetype'
 
 from functools import reduce
-import datetime
+from datetime import datetime
 
 import spikeinterface as si
 import spikeinterface.extractors as se
@@ -41,27 +41,67 @@ from probeinterface import get_probe, read_prb
 
 def run_sorting(input_path,sorter_path = 'tmp_MS4'):
 
-  # input_path e.g. /n/groups/datta/guitchounts/data/gmou51/gmou51_2021-12-15_18-08-21_odor/
-
-  data = se.read_openephys(input_path)
-
-  ## remove the Record Node from input
-  if 'Record' in input_path:
-    input_path = os.path.split(input_path)[0] 
+  fs = 3e4
 
 
-  probe = read_prb(glob('%s/../*.prb' % input_path)[0] ).probes[0]    #('/home/gg121/code/spikeinterface_analysis/A4x16-Poly3-5mm-20-200-160-H64LP.prb').probes[0]
-  recording = data.set_probe(probe)
-
-
-
-  print('Channel ids:', recording.get_channel_ids())
+  ## if this is a triple-underscore-separated concatenated string, separate it; otherwise make it a list of one:
+  if len(input_path.split('___'))>1:
+    input_path = input_path.split('___')
+  else:
+    input_path = [input_path]
   
-  
-  recording = st.preprocessing.notch_filter(recording,freq=60)
+  print('INPUT PATH in run_sorting = ', input_path)
 
-  recording_f = st.preprocessing.bandpass_filter(recording, freq_min=300, freq_max=6000)
-  recording_cmr = st.preprocessing.common_reference(recording_f, reference='global',  operator='median')
+  recordings_list = []
+  recordings_length_idxs = [0] ## list of numbers of frames in each recording...
+
+  for sesh_idx, session in enumerate(input_path):
+      
+      
+
+      data = se.read_openephys(glob('%s/Record*' % session)[0])
+
+      ## remove the Record Node from input
+      if 'Record' in session:
+        session = os.path.split(session)[0] 
+
+
+      probe = read_prb(glob('%s/../*.prb' % session)[0] ).probes[0]
+      recording = data.set_probe(probe)
+
+
+      recording = st.preprocessing.notch_filter(recording,freq=60)
+      recording_f = st.preprocessing.bandpass_filter(recording, freq_min=300, freq_max=6000)
+      recording_cmr = st.preprocessing.common_reference(recording_f, reference='global',  operator='median')
+   
+      # # shorten the recording for testing
+      recording_cmr = recording_cmr.frame_slice(start_frame=0*fs, end_frame=5*fs)
+
+
+
+      recordings_list.append(recording_cmr)
+      
+      recordings_length_idxs.append(recordings_length_idxs[sesh_idx] + recording_cmr.get_num_frames()) # recording_cmr.get_num_samples() instead? same thing?
+      
+
+  multirecording = si.concatenate_recordings(recordings_list) 
+
+
+  # find the base path - the common mouse folder here
+  base_paths = np.array([os.path.split(session)[0] for session in input_path])
+  base_path = base_paths[0] if np.all(base_paths == base_paths) else None
+
+  
+  dates = np.array([session.split('_')[1] for session in input_path])
+  date = dates[0] if np.all(dates == dates) else None
+  
+  sorter_full_path = '%s/concat_sorting/%s/' % (base_path,date)
+  if not os.path.exists(sorter_full_path):
+      os.makedirs(sorter_full_path, exist_ok=True)
+
+  firings_path = '%s/firings.npz' % sorter_full_path
+
+
   
   
 
@@ -78,7 +118,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   ms4_params['clip_size'] = 64 # waveform is 64 samples
   ms4_params['detect_interval'] = 15 # 0.5 ms (?)
 
-  fs = 3e4
+  
 
 
 
@@ -86,27 +126,64 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   
   # run Mountainsort:
 
-  sorter_full_path = '%s/%s' % (input_path, sorter_path)
-  firings_path = '%s/%s/firings.npz' % (input_path, sorter_path)
+  #sorter_full_path = '%s/%s' % (input_path, sorter_path)
+  
 
   if not os.path.exists(firings_path):
     print('Starting mountainsort4 sorting....')
     start = time.time()
     
-    sorting_MS4 = ss.run_sorter('mountainsort4',recording_cmr,  # parallel=True,
+    sorting_MS4 = ss.run_sorter('mountainsort4',multirecording,  # parallel=True,
                            verbose=True,
                            output_folder=sorter_full_path, **ms4_params)
 
     print('sorting finished in %f seconds...' % (time.time() - start) )
 
+
   else:
     print('Loading pre-computed sorting')
     sorting_MS4 = si.core.NpzSortingExtractor(firings_path)
 
+
+
+  #################################### save spike trains in folders of individual sessions: ####################################
+  
+  tmp_spike_trains = sorting_MS4.get_all_spike_trains()[0]
+  tmp_spike_times = tmp_spike_trains[0]
+  tmp_spike_labels = tmp_spike_trains[1]
+
+
+  for sesh_idx, session in enumerate(input_path):
+    
+    
+    start,stop = recordings_length_idxs[sesh_idx],recordings_length_idxs[sesh_idx+1]
+    
+    tmp_spike_idx = (tmp_spike_trains[0]>=start) & (tmp_spike_trains[0] < stop) 
+    
+    session_spike_times = tmp_spike_times[tmp_spike_idx] - tmp_spike_times[tmp_spike_idx][0] # normalize so it starts at 0 again.
+    session_spike_labels = tmp_spike_labels[tmp_spike_idx]
+    
+    
+    session_local_path = os.path.split(session)[1]
+    session_firings_save_path = '%s/%s/%s/' % (base_path,session_local_path,sorter_path )
+    if not os.path.exists(session_firings_save_path):
+         os.makedirs(session_firings_save_path, exist_ok=True)
+    
+    np.savez('%s/firings.npz' % session_firings_save_path,
+             unit_ids=sorting_MS4.get_unit_ids(),
+             spike_indexes = session_spike_times, spike_labels =  session_spike_labels)
+    
+    print(session,start,stop,session_spike_times[-1])
+    
+
+
+
+
+
   ### Extract waveforms, compute pcs, export to phy, and save sorting report:
   
   print('Extracting waveforms')
-  we = si.extract_waveforms(recording_cmr, sorting_MS4, '%s/tmp_MS4/waveforms' % input_path,
+  we = si.extract_waveforms(recording_cmr, sorting_MS4, '%s/waveforms' % sorter_full_path,
             ms_before=1,ms_after=1,load_if_exists=True,
                            n_jobs=8, total_memory='1G') # 
 
@@ -119,7 +196,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   print('Computing Metrics')
   qc = st.compute_quality_metrics(we, waveform_principal_component=pc) # load_if_exists=True -- not an option in 0.91
 
-  qc.to_csv('%s/tmp_MS4/metrics.csv' % input_path)
+  qc.to_csv('%s/metrics.csv' % sorter_full_path)
 
   
   # change--now saving unit_ids rather than the index of list of all units.
@@ -128,11 +205,11 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
 
   
   all_unit_ids = sorting_MS4.get_unit_ids()
-  np.savez('%s/tmp_MS4/unit_properties' % input_path,all_unit_ids=all_unit_ids,good_units=good_units)
+  np.savez('%s/unit_properties' % sorter_full_path,all_unit_ids=all_unit_ids,good_units=good_units)
 
   print('saved unit properties')
 
-  sorting_MS4.dump_to_pickle('%s/tmp_MS4/sorting.pickle' % input_path)
+  sorting_MS4.dump_to_pickle('%s/sorting.pickle' % sorter_full_path)
   print('saved unit sorting pickle')
 
 
@@ -187,7 +264,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       
       sns.despine(left=True,bottom=True)
 
-      f.savefig('%s/tmp_MS4/unit_%d.pdf' % (input_path,unit) )
+      f.savefig('%s/unit_%d.pdf' % sorter_full_path)
 
       plt.close(f)
 
@@ -196,7 +273,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
 
   try:
     print('Exporting to Phy')
-    export_to_phy(we, '%s/tmp_MS4/phy' % input_path , 
+    export_to_phy(we, '%s/phy' % sorter_full_path, 
                 n_jobs=8, total_memory='1G',
                 #peak_sign='neg',
                 copy_binary=False,
