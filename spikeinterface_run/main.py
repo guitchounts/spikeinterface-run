@@ -145,6 +145,9 @@ def sort_concat(input_path,date_to_sort, log_name, cores, memory, wall_time, par
 
     for session_set in session_sets:
 
+        ## create log path:
+        log_path = '%s/%s_%%j.out' % (session_set[0],log_name)
+
         session_set = '___'.join(session_set) # have to join to pass as an argument
 
         if not slurm:
@@ -155,8 +158,6 @@ def sort_concat(input_path,date_to_sort, log_name, cores, memory, wall_time, par
                       
         else:
 
-            ## create log path:
-            log_path = '%s/%s_%%j.out' % (session,log_name)
             
             print('Submitting sorting on session %s' % session)
 
