@@ -159,7 +159,7 @@ def sort_concat(input_path,date_to_sort, log_name, cores, memory, wall_time, par
         else:
 
             
-            print('Submitting sorting on session %s' % session)
+            print('Submitting sorting on session %s' % session_set)
 
             os.system('sbatch -p {} -t {} --mem {} -c {} -o {} --wrap """spikeinterface-run submit """{}""" --sorter-path {} """ '.format(
                         partition, wall_time, memory, cores, log_path, session_set, sorter_path
