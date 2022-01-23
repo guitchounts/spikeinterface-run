@@ -75,7 +75,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       recording_cmr = st.preprocessing.common_reference(recording_f, reference='global',  operator='median')
    
       # # shorten the recording for testing
-      recording_cmr = recording_cmr.frame_slice(start_frame=0*fs, end_frame=5*fs)
+      #recording_cmr = recording_cmr.frame_slice(start_frame=0*fs, end_frame=5*fs)
 
 
 
@@ -223,6 +223,12 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       data_channels[channel_ids[i]] = channel_locations[i]
 
 
+  ## save figs for all units, but save the good units also in a special palce:
+  good_unit_plot_path = '%s/good_units/' % sorter_full_path
+  if not os.path.exists(sorter_full_path):
+      os.makedirs(sorter_full_path, exist_ok=True)
+
+
   for unit in sorting_MS4.get_unit_ids(): 
 
       waveform = we.get_waveforms(unit_id=unit)
@@ -264,7 +270,10 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       
       sns.despine(left=True,bottom=True)
 
-      f.savefig('%s/unit_%d.pdf' % sorter_full_path)
+      f.savefig('%s/unit_%d.pdf' % (sorter_full_path,unit))
+
+      if unit in good_units:
+        f.savefig('%s/unit_%d.pdf' % (good_unit_plot_path,unit))
 
       plt.close(f)
 
