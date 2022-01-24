@@ -225,8 +225,8 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
 
   ## save figs for all units, but save the good units also in a special palce:
   good_unit_plot_path = '%s/good_units/' % sorter_full_path
-  if not os.path.exists(sorter_full_path):
-      os.makedirs(sorter_full_path, exist_ok=True)
+  if not os.path.exists(good_unit_plot_path):
+      os.makedirs(good_unit_plot_path, exist_ok=True)
 
 
   for unit in sorting_MS4.get_unit_ids(): 
