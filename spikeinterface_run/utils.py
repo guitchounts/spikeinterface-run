@@ -183,20 +183,27 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   ### Extract waveforms, compute pcs, export to phy, and save sorting report:
   
   print('Extracting waveforms')
+  ms_before=1
+  ms_after=1
+  waveform_time = ms_before + ms_after # 2 ms, 60 timepoints
   we = si.extract_waveforms(recording_cmr, sorting_MS4, '%s/waveforms' % sorter_full_path,
-            ms_before=1,ms_after=1,load_if_exists=True,
+            ms_before=ms_before,ms_after=ms_after,load_if_exists=True,
                            n_jobs=8, total_memory='1G') # 
 
 
+  
   print('Computing PCs')
   pc = st.compute_principal_components(we, load_if_exists=True,
                                        n_components=3)
 
 
   print('Computing Metrics')
-  qc = st.compute_quality_metrics(we, waveform_principal_component=pc) # load_if_exists=True -- not an option in 0.91
-
-  qc.to_csv('%s/metrics.csv' % sorter_full_path)
+  qc_path = '%s/metrics.csv' % sorter_full_path
+  if not os.path.exists(qc_path):
+    qc = st.compute_quality_metrics(we, waveform_principal_component=pc) # load_if_exists=True -- not an option in 0.91
+    qc.to_csv(qc_path)
+  else:
+    qc = pd.read_csv(qc_path,index_col='Unnamed: 0')
 
   
   # change--now saving unit_ids rather than the index of list of all units.
@@ -229,6 +236,11 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       os.makedirs(good_unit_plot_path, exist_ok=True)
 
 
+  
+  waveform_scale_factor = 0.1 # how much to downscale waveforms in the plot
+  plot_x_lim = 750
+  plot_y_lim = 150
+
   for unit in sorting_MS4.get_unit_ids(): 
 
       waveform = we.get_waveforms(unit_id=unit)
@@ -239,16 +251,25 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       for ch,key in enumerate(data_channels):
       
 
-          ax.plot(np.arange(0,20,20/60) + probe._contact_positions[ch,0],
-                waveform[:,:,ch].mean(axis=0) + probe._contact_positions[ch,1], 
+          ax.plot(np.arange(0,20,20/(fs*waveform_time / 1000)) + probe._contact_positions[ch,0],
+                waveform_scale_factor * waveform[:,:,ch].mean(axis=0) + probe._contact_positions[ch,1], 
                 color='k', lw=0.25)
       
+      # in x, 20 microns represents 60 time steps (2 ms)... 
+      ax.plot([plot_x_lim - 20, plot_x_lim],[0,0],c='k',lw=0.5 ) # time scale bar
+      scale_bar_uv = 200
+      ax.plot([plot_x_lim, plot_x_lim],[0, waveform_scale_factor * scale_bar_uv  ],c='k',lw=0.5 ) # µV scale bar
+      ax.text(plot_x_lim,-10,'%d ms' % waveform_time, fontsize=6)
+      ax.text(plot_x_lim+10,10,'%d µV' % scale_bar_uv,rotation=90, fontsize=6)
+
       
       ax.set_title('unit %d, snr=%.2f, ISI=%.2f' % (unit,qc.loc[unit]['snr'],
                                                qc.loc[unit]['isi_violations_rate'] ) )
 
-      ax.set_ylim([0,150])
-      ax.set_xlim([0,750])
+      ax.set_ylim([0,plot_y_lim])
+      ax.set_xlim([0,plot_x_lim])
+      ax.set_ylabel('Depth (µm)')
+      ax.set_xlabel('Shank Distance (µm)')
 
       divider = make_axes_locatable(ax)
       cax = divider.append_axes('bottom', size='50%', pad=0.05)
@@ -268,7 +289,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       
       cax.patch.set_alpha(0)
       
-      sns.despine(left=True,bottom=True)
+      sns.despine(offset=5)
 
       f.savefig('%s/unit_%d.pdf' % (sorter_full_path,unit))
 
