@@ -108,7 +108,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   ## Load and set parameters for sorting:
 
   default_ms4_params = ss.Mountainsort4Sorter.default_params()
-  num_workers = 8
+  num_workers = int(os.environ['SLURM_JOB_CPUS_PER_NODE']) # 8
   ms4_params = default_ms4_params.copy()
   ms4_params['adjacency_radius'] = 50
   ms4_params['detect_sign'] = -1
@@ -186,9 +186,9 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   ms_before=1
   ms_after=1
   waveform_time = ms_before + ms_after # 2 ms, 60 timepoints
-  we = si.extract_waveforms(recording_cmr, sorting_MS4, '%s/waveforms' % sorter_full_path,
+  we = si.extract_waveforms(multirecording, sorting_MS4, '%s/waveforms' % sorter_full_path,
             ms_before=ms_before,ms_after=ms_after,load_if_exists=True,
-                           n_jobs=8, total_memory='1G') # 
+                           n_jobs=num_workers, total_memory='1G') # 
 
 
   
@@ -207,7 +207,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
 
   
   # change--now saving unit_ids rather than the index of list of all units.
-  good_units = qc[(qc['snr'] >=3.5) & (qc['snr'] <=20) & (qc['isi_violations_rate'] < 0.2) & (qc['firing_rate'] >= 0.1)  & (qc['presence_ratio'] >= 0.5)   ].index
+  good_units = qc[(qc['snr'] >=3.5) & (qc['snr'] <=25) & (qc['isi_violations_rate'] < 0.2) & (qc['firing_rate'] >= 0.1)  & (qc['presence_ratio'] >= 0.5)   ].index
 
 
   
@@ -304,7 +304,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
   try:
     print('Exporting to Phy')
     export_to_phy(we, '%s/phy' % sorter_full_path, 
-                n_jobs=8, total_memory='1G',
+                n_jobs=num_workers, total_memory='1G',
                 #peak_sign='neg',
                 copy_binary=False,
                 progress_bar=True, #verbose=True,
