@@ -252,7 +252,7 @@ def run_sorting(input_path,sorter_path = 'tmp_MS4'):
       
 
           ax.plot(np.arange(0,20,20/(fs*waveform_time / 1000)) + probe._contact_positions[ch,0],
-                waveform_scale_factor * waveform[:,:,ch].mean(axis=0) + probe._contact_positions[ch,1], 
+                waveform_scale_factor * waveform[:,:,probe.device_channel_indices[ch]].mean(axis=0) + probe._contact_positions[ch,1], 
                 color='k', lw=0.25)
       
       # in x, 20 microns represents 60 time steps (2 ms)... 
